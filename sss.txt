@@ -1,0 +1,302 @@
+using Microsoft.AspNetCore.Mvc;
+using Syncfusion.Drawing;
+using Syncfusion.Pdf;
+using Syncfusion.Pdf.Graphics;
+
+namespace Metavam.Core.ApplicationServices.Services.PDFGenerator;
+
+public static class LeasingFardaInstallmentSalesContract
+{
+    public static FileStreamResult GeneratePDF(string webRootPath)
+    {
+        var document = new PdfDocument();
+
+        document.ZugferdVersion = ZugferdVersion.ZugferdVersion2_0;
+        document.ZugferdConformanceLevel = ZugferdConformanceLevel.Extended;
+
+        string basePath = webRootPath;
+        string dataPath = basePath + @"/PDF/";
+
+        //Add page to the PDF
+        PdfPage page1 = document.Pages.Add();
+
+        var page1Width = page1.GetClientSize().Width;
+        var page1Height = page1.GetClientSize().Height;
+
+        PdfBrush blackBrush = new PdfSolidBrush(Color.FromArgb(1, 0, 0, 0));
+
+        var fontStream = new FileStream(dataPath + "Tahoma_Regular_font.ttf", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+        var fontArialRegular = new PdfTrueTypeFont(fontStream, 8, PdfFontStyle.Regular);
+        var fontArialBold = new PdfTrueTypeFont(fontStream, 9, PdfFontStyle.Bold);
+
+        PdfColor borderColor = Color.FromArgb(0, 0, 0, 0);
+        var borderPen = new PdfPen(borderColor, 1f);
+        page1.Graphics.DrawRectangle(borderPen, new RectangleF(0, 0, page1Width, page1Height));
+
+        var formatRightTop = new PdfStringFormat
+        {
+            TextDirection = PdfTextDirection.RightToLeft,
+            Alignment = PdfTextAlignment.Right,
+            LineAlignment = PdfVerticalAlignment.Top
+        };
+
+        var formatCenterMiddle = new PdfStringFormat
+        {
+            TextDirection = PdfTextDirection.RightToLeft,
+            Alignment = PdfTextAlignment.Center,
+            LineAlignment = PdfVerticalAlignment.Middle
+        };
+
+        var formatCenterTop = new PdfStringFormat
+        {
+            TextDirection = PdfTextDirection.RightToLeft,
+            Alignment = PdfTextAlignment.Center,
+            LineAlignment = PdfVerticalAlignment.Top
+        };
+
+        var page2 = document.Pages.Add();
+        var page2Width = page1.GetClientSize().Width;
+        var page2Height = page1.GetClientSize().Height;
+        page2.Graphics.DrawRectangle(borderPen, new RectangleF(0, 0, page2Width, page2Height));
+
+        #region Section 1 (Header & Footer)
+
+        var bounds = new RectangleF(0, 0, document.Pages[0].GetClientSize().Width, 80);
+
+        var header = new PdfPageTemplateElement(bounds);
+
+        var jpgImageStream = new FileStream(dataPath + "FardaLogo.png", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+        PdfImage image = new PdfBitmap(jpgImageStream);
+
+        header.Graphics.DrawImage(image, new PointF(page1Width - 80, 0));
+        header.Graphics.DrawString("شماره: .............\nتاریخ: ...............", fontArialRegular, blackBrush, new RectangleF(20, 20, 100, 100), formatRightTop);
+
+        document.Template.Top = header;
+
+        var footer = new PdfPageTemplateElement(bounds);
+
+        PdfFont font = new PdfStandardFont(PdfFontFamily.Helvetica, 13);
+
+        PdfBrush brush = new PdfSolidBrush(Color.Black);
+
+        var pageNumber = new PdfPageNumberField(font, brush);
+
+        var compositeField = new PdfCompositeField(font, brush, "{0}", pageNumber)
+        {
+            Bounds = footer.Bounds
+        };
+
+        compositeField.Draw(footer.Graphics, new PointF(470, 15));
+
+        document.Template.Bottom = footer;
+
+        #endregion
+
+        #region Section 2
+
+        int lineHeight = 15;
+
+        page1.Graphics.DrawString("قرارداد فروش اقساطی کالا", fontArialBold, blackBrush, new RectangleF(0, 70, page1Width, 20), formatCenterMiddle);
+        page1.Graphics.DrawString("این قرارداد با توجه به تامین مالی توسط شرکت واسپاری فردا (سهامی خاص) به منظور خرید کالا توسط خریدار ذیل، در راستای اجرای ماده۱۰ قانون مدنی و مطابق با قانون عمليات بانکي بدون ربا و همچنین دستورالعمل اجرایی تاسیس، فعاليت و نظارت بر شرکت های واسپاری و سایر آیین نامه ها، دستورالعمل ها و بخشنامه های ابلاغی از سوی بانک مرکزی جمهوری اسلامی ایران بین امضاء کنندگان زیر منعقد گردید و کلیه مندرجات آن توسط طرفین مورد پذیرش قرار گرفته و نسبت به آن هیچگونه اختلافی ندارند و هر گونه ایراد و اعتراضی به مفاد آن را از خود سلب و ساقط نمودند.",
+            fontArialRegular, blackBrush, new RectangleF(0, 100, page1Width - 10, 40), formatRightTop);
+
+        page1.Graphics.DrawString("ماده۱) طرفین قرارداد:", fontArialBold, blackBrush, new RectangleF(0, 150, page1Width - 10, lineHeight), formatRightTop);
+
+        page1.Graphics.DrawString("الف)واسپاری: ", fontArialBold, blackBrush, new RectangleF(0, 150 + lineHeight, page1Width - 10, lineHeight), formatRightTop);
+        page1.Graphics.DrawString("                       شرکت واسپاری فردا (سهامی خاص) به شماره ثبت 601555 و شناسه ملی 14011486460 به نشانی تهران خیابان نلسون ماندلا، بلوار گلشهر، پلاک 22 ، واحد 29 و  کد پستی 1915663657 با نمایندگی صاحبان مجاز امضاء که در این قرارداد \"واسپاری\" نامیده می شود.",
+            fontArialRegular, blackBrush, new RectangleF(0, 150 + lineHeight, page1Width - 10, lineHeight * 2), formatRightTop);
+
+        page1.Graphics.DrawString("ب)خریدار: ", fontArialBold, blackBrush, new RectangleF(0, 150 + lineHeight * 3, page1Width - 10, lineHeight), formatRightTop);
+        page1.Graphics.DrawString("                       خانم/آقای ................................................................. فرزند ...................... تاریخ تولد ............................. به شماره شناسنامه ................... صادره از ......................     شماره ملی ......................................................... به نشانی ................................................................................................................................................. کدپستی .................................................. و شماره تلفن ثابت ..................................... و شماره تلفن همراه .............................................. که از این پس در این قرارداد \"خریدار\" نامیده می شود. خریدار متعهد است در صورت تغییر محل اقامتگاه خود، مراتب را ظرف مدت ۷ روز با ارائه مستندات اقامتگاه جدید به واسپاری اعلام نماید. در غیر اینصورت کلیه مراسلات و مکاتبات به آدرس موجود در صدر این قرارداد ارسال و ابلاغ شده تلقی می گردد.",
+            fontArialRegular, blackBrush, new RectangleF(0, 150 + lineHeight * 3, page1Width - 10, lineHeight * 6), formatRightTop);
+
+
+        page1.Graphics.DrawString("ماده۲) مورد معامله: ", fontArialBold, blackBrush, new RectangleF(0, 150 + lineHeight * 8, page1Width - 10, lineHeight * 1), formatRightTop);
+        page1.Graphics.DrawString("                                 موضوع مورد معامله عبارتست از فروش اقساطی کالا مطابق فاکتور شماره .................... مورخ ......................... شرکت ....................... به شناسه ملی ......................................... که جزء لاینفک این قرارداد می باشد. فاکتور مورد نظر به رویت خریدار رسیده و نوع، مشخصات و کارخانه تولید کننده مورد معامله توسط خریدار تعیین گردیده است و مشارالیه از شرایط و کم و کیف آن اطلاع کامل دارد و با امضاء این قرارداد اقرار نمود مورد معامله را به طور صحیح و سالم و با کیفیتی که مورد تقاضای وی بوده است، تحویل گرفته و کلیه خیارات متصوره را از خود سلب و ساقط نمود. لذا واسپاری هیچگونه تعهد و مسئولیتی در این مورد نداشته و نخواهد داشت. ",
+            fontArialRegular, blackBrush, new RectangleF(0, 150 + lineHeight * 8, page1Width - 10, lineHeight * 5), formatRightTop);
+
+        page1.Graphics.DrawString("ماده۳) قیمت مورد معامله: ", fontArialBold, blackBrush, new RectangleF(0, 150 + lineHeight * 12, page1Width - 10, lineHeight * 1), formatRightTop);
+        page1.Graphics.DrawString("                                            کل قیمت مورد معامله، مبلغ و نرخ تسهیلات، و سایر محاسبات مربوطه به شرح جدول زیر می باشد",
+            fontArialRegular, blackBrush, new RectangleF(0, 150 + lineHeight * 12, page1Width - 10, lineHeight * 1), formatRightTop);
+
+        #endregion
+
+        #region Section 3 (Table)
+
+        /* DOES NOT SUPPORT RTL IN TABLE */
+        //var setting = new PdfGridBuiltinStyleSettings
+        //{
+        //    ApplyStyleForHeaderRow = false,
+        //    ApplyStyleForBandedRows = false,
+        //    ApplyStyleForBandedColumns = true,
+        //    ApplyStyleForFirstColumn = false,
+        //    ApplyStyleForLastColumn = false,
+        //    ApplyStyleForLastRow = false
+        //};
+
+        //var format = new PdfLayoutFormat
+        //{
+        //    Break = PdfLayoutBreakType.FitPage,
+        //    Layout = PdfLayoutType.OnePage
+        //};
+
+        //var grid = new PdfGrid
+        //{
+        //    DataSource = new List<MyGrid>
+        //    {
+        //        new("قیمت نقدی کالا(ریال)", "", "تعداد اقساط", ""),
+        //        new("پیش پرداخت نقدی متقاضی به فروشنده/تامین کننده(ریال)", "", "مبلغ هر قسط بر اساس فرمولPMT(ریال", ""),
+        //        new("مبلغ تسهیلات(ریال)", "", "تناوب پرداخت اقساط (به ماه)", ""),
+        //        new("نرخ سود تسهیلات(درصد)", "", "تاریخ سررسید اولین قسط", ""),
+        //        new("مدت قرارداد (به ماه)", "", "تاریخ سررسید آخرین قسط", ""),
+        //    },
+        //    Style =
+        //    {
+        //        AllowHorizontalOverflow = false,
+        //        Font = fontArialRegular,
+        //        CellPadding =
+        //        {
+        //            All = 2
+        //        }
+        //    }
+        //};
+
+        //grid.Headers.Clear();
+
+        //grid.ApplyBuiltinStyle(PdfGridBuiltinStyle.GridTable4, setting);
+
+        //grid.Style.AllowHorizontalOverflow = false;
+        ////Draw table
+        //grid.Draw(page1, new RectangleF(10, 150 + lineHeight * 13, page1Width - 20, lineHeight * 10));
+
+
+        #endregion
+
+        #region Section 3 (Table)
+
+        var grayBrush = new PdfSolidBrush(Color.LightGray);
+        var whiteBrush = new PdfSolidBrush(Color.White);
+        
+        var row11 = new RectangleF(10 + 0 * (page1Width / 4), 150 + lineHeight * 13, page1Width / 4     , lineHeight * 2);
+        var row12 = new RectangleF(10 + 1 * (page1Width / 4), 150 + lineHeight * 13, page1Width / 4     , lineHeight * 2);
+        var row13 = new RectangleF(10 + 2 * (page1Width / 4), 150 + lineHeight * 13, page1Width / 4     , lineHeight * 2);
+        var row14 = new RectangleF(10 + 3 * (page1Width / 4), 150 + lineHeight * 13, page1Width / 4 - 20, lineHeight * 2);
+
+        page1.Graphics.DrawRectangle(borderPen, row11);
+        page1.Graphics.DrawRectangle(whiteBrush, row11);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row11, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row12);
+        page1.Graphics.DrawRectangle(grayBrush, row12);
+        page1.Graphics.DrawString("قیمت نقدی کالا(ریال)", fontArialRegular, blackBrush, row12, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row13);
+        page1.Graphics.DrawRectangle(whiteBrush, row13);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row13, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row14);
+        page1.Graphics.DrawRectangle(grayBrush, row14);
+        page1.Graphics.DrawString("تعداد اقساط", fontArialRegular, blackBrush, row14, formatCenterMiddle);
+
+
+        var row21 = new RectangleF(10 + 0 * (page1Width / 4), 150 + lineHeight * 15, page1Width / 4     , lineHeight * 2);
+        var row22 = new RectangleF(10 + 1 * (page1Width / 4), 150 + lineHeight * 15, page1Width / 4     , lineHeight * 2);
+        var row23 = new RectangleF(10 + 2 * (page1Width / 4), 150 + lineHeight * 15, page1Width / 4     , lineHeight * 2);
+        var row24 = new RectangleF(10 + 3 * (page1Width / 4), 150 + lineHeight * 15, page1Width / 4 - 20, lineHeight * 2);
+
+        page1.Graphics.DrawRectangle(borderPen, row21);
+        page1.Graphics.DrawRectangle(whiteBrush, row21);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush,row21, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row22);
+        page1.Graphics.DrawRectangle(grayBrush, row22);
+        page1.Graphics.DrawString("پیش پرداخت نقدی متقاضی به فروشنده/تامین کننده(ریال)", fontArialRegular, blackBrush,row22, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row23);
+        page1.Graphics.DrawRectangle(whiteBrush, row23);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush,row23, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row24);
+        page1.Graphics.DrawRectangle(grayBrush, row24);
+        page1.Graphics.DrawString("مبلغ هر قسط بر اساس فرمولPMT(ریال", fontArialRegular, blackBrush,row24, formatCenterMiddle);
+
+
+        var row31 = new RectangleF(10 + 0 * (page1Width / 4), 150 + lineHeight * 17, page1Width / 4, lineHeight * 2);
+        var row32 = new RectangleF(10 + 1 * (page1Width / 4), 150 + lineHeight * 17, page1Width / 4, lineHeight * 2);
+        var row33 = new RectangleF(10 + 2 * (page1Width / 4), 150 + lineHeight * 17, page1Width / 4, lineHeight * 2);
+        var row34 = new RectangleF(10 + 3 * (page1Width / 4), 150 + lineHeight * 17, page1Width / 4 - 20, lineHeight * 2);
+
+        page1.Graphics.DrawRectangle(borderPen, row31);
+        page1.Graphics.DrawRectangle(whiteBrush, row31);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row31, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row32);
+        page1.Graphics.DrawRectangle(grayBrush, row32);
+        page1.Graphics.DrawString("مبلغ تسهیلات(ریال)", fontArialRegular, blackBrush, row32, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row33);
+        page1.Graphics.DrawRectangle(whiteBrush, row33);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row33, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row34);
+        page1.Graphics.DrawRectangle(grayBrush, row34);
+        page1.Graphics.DrawString("تناوب پرداخت اقساط (به ماه)", fontArialRegular, blackBrush, row34, formatCenterMiddle);
+
+
+        var row41 = new RectangleF(10 + 0 * (page1Width / 4), 150 + lineHeight * 19, page1Width / 4, lineHeight * 2);
+        var row42 = new RectangleF(10 + 1 * (page1Width / 4), 150 + lineHeight * 19, page1Width / 4, lineHeight * 2);
+        var row43 = new RectangleF(10 + 2 * (page1Width / 4), 150 + lineHeight * 19, page1Width / 4, lineHeight * 2);
+        var row44 = new RectangleF(10 + 3 * (page1Width / 4), 150 + lineHeight * 19, page1Width / 4 - 20, lineHeight * 2);
+
+        page1.Graphics.DrawRectangle(borderPen, row41);
+        page1.Graphics.DrawRectangle(whiteBrush, row41);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row41, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row42);
+        page1.Graphics.DrawRectangle(grayBrush, row42);
+        page1.Graphics.DrawString("نرخ سود تسهیلات(درصد)", fontArialRegular, blackBrush, row42, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row43);
+        page1.Graphics.DrawRectangle(whiteBrush, row43);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row43, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row44);
+        page1.Graphics.DrawRectangle(grayBrush, row44);
+        page1.Graphics.DrawString("تاریخ سررسید اولین قسط", fontArialRegular, blackBrush, row44, formatCenterMiddle);
+
+
+        var row51 = new RectangleF(10 + 0 * (page1Width / 4), 150 + lineHeight * 21, page1Width / 4, lineHeight * 2);
+        var row52 = new RectangleF(10 + 1 * (page1Width / 4), 150 + lineHeight * 21, page1Width / 4, lineHeight * 2);
+        var row53 = new RectangleF(10 + 2 * (page1Width / 4), 150 + lineHeight * 21, page1Width / 4, lineHeight * 2);
+        var row54 = new RectangleF(10 + 3 * (page1Width / 4), 150 + lineHeight * 21, page1Width / 4 - 20, lineHeight * 2);
+
+        page1.Graphics.DrawRectangle(borderPen, row51);
+        page1.Graphics.DrawRectangle(whiteBrush, row51);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row51, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row52);
+        page1.Graphics.DrawRectangle(grayBrush, row52);
+        page1.Graphics.DrawString("مدت قرارداد (به ماه)", fontArialRegular, blackBrush, row52, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row53);
+        page1.Graphics.DrawRectangle(whiteBrush, row53);
+        page1.Graphics.DrawString("", fontArialRegular, blackBrush, row53, formatCenterMiddle);
+        page1.Graphics.DrawRectangle(borderPen, row54);
+        page1.Graphics.DrawRectangle(grayBrush, row54);
+        page1.Graphics.DrawString("تاریخ سررسید آخرین قسط", fontArialRegular, blackBrush, row54, formatCenterMiddle);
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        var stream = new MemoryStream();
+        document.Save(stream);
+        document.Close();
+
+        stream.Position = 0;
+        var fileStreamResult = new FileStreamResult(stream, "application/pdf")
+        {
+            FileDownloadName = "Main.pdf"
+        };
+        return fileStreamResult;
+    }
+}
